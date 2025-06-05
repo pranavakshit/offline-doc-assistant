@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+env/
+venv/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+results/
+*.csv
+*.json
+config_local.yaml

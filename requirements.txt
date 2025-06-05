@@ -1,0 +1,12 @@
+llama-cpp-python
+sentence-transformers
+tqdm
+faiss-cpu
+python-docx
+PyPDF2
+pytesseract
+transformers
+torch
+fuzzywuzzy
+python-Levenshtein
+easyocr
