@@ -1,19 +1,29 @@
+# config.yaml
+
 input_folder: "docs"
 output_folder: "results"
 log_csv: "results/search_logs.csv"
+
 ocr_enabled: true
-ocr_language: "eng"
+ocr_languages:
+  - en
+  - hi
+
 llm_model: "llama3.1-8b"
 llm_context_window: 8192
 llm_temperature: 0.7
+
 embedding_model: "all-MiniLM-L6-v2"
+
 abbreviation_mapping:
   Ltd: Limited
   Pvt: Private
   Inc: Incorporated
   Co: Company
   Mfg: Manufacturing
+
 fuzzy_match_threshold: 85
+
 summary_model: "t5-small"
 summary_length: "medium"
 rephrase_styles:
@@ -21,5 +31,6 @@ rephrase_styles:
   - simplified
   - bullet
   - conversational
+
 feedback_enabled: true
 feedback_storage: "results/feedback.json"

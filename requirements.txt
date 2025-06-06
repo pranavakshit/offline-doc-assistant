@@ -10,3 +10,10 @@ torch
 fuzzywuzzy
 python-Levenshtein
 easyocr
+pdf2image
+PyYAML
+pillow
+streamlit
+nltk
+scikit-learn
+spacy
