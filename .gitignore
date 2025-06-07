@@ -11,3 +11,4 @@ results/
 *.csv
 *.json
 config_local.yaml
+/docs/
