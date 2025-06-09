@@ -40,41 +40,49 @@ class SmartSearcher:
         self.doc_data = []
         for fname in os.listdir(self.docs_folder):
             fpath = os.path.join(self.docs_folder, fname)
+            line_info = []
+
             if fname.endswith('.txt'):
                 with open(fpath, 'r', encoding='utf-8') as f:
                     lines = f.readlines()
+                for idx, line in enumerate(lines):
+                    line_info.append({'text': line.strip(), 'page': 1, 'line_num': idx + 1})
+
             elif fname.endswith('.docx'):
                 doc = Document(fpath)
                 lines = [p.text for p in doc.paragraphs if p.text.strip()]
+                for idx, line in enumerate(lines):
+                    line_info.append({'text': line.strip(), 'page': 1, 'line_num': idx + 1})
+
             elif fname.endswith('.pdf'):
                 reader = PdfReader(fpath)
-                lines = []
-                for page in reader.pages:
+                for pageno, page in enumerate(reader.pages, start=1):
                     text = page.extract_text()
                     if (not text or text.isspace()) and self.reader:
-                        ocr_text = self.extract_text_with_ocr(fpath)
-                        lines += ocr_text
+                        ocr_lines = self.extract_text_with_ocr(fpath, pageno)
+                        for lineno, line in enumerate(ocr_lines, start=1):
+                            line_info.append({'text': line.strip(), 'page': pageno, 'line_num': lineno})
                     else:
-                        lines += text.split('\n') if text else []
+                        lines = text.split('\n') if text else []
+                        for lineno, line in enumerate(lines, start=1):
+                            line_info.append({'text': line.strip(), 'page': pageno, 'line_num': lineno})
             else:
                 continue
 
-            embeddings = self.embedder.encode(lines, convert_to_tensor=True) if lines else None
+            all_lines = [entry['text'] for entry in line_info]
+            embeddings = self.embedder.encode(all_lines, convert_to_tensor=True) if all_lines else None
 
             self.doc_data.append({
                 'name': fname,
-                'lines': lines,
+                'lines': line_info,
                 'embeddings': embeddings
             })
 
-    def extract_text_with_ocr(self, pdf_path):
+    def extract_text_with_ocr(self, pdf_path, page_number):
         pages = convert_from_path(pdf_path)
-        lines = []
-        for p in pages:
-            result = self.reader.readtext(p)
-            text = ' '.join([x[1] for x in result])
-            lines += text.split('\n')
-        return lines
+        result = self.reader.readtext(pages[page_number - 1])
+        text = ' '.join([x[1] for x in result])
+        return text.split('\n')
 
     def expand_abbreviations(self, text):
         for abbr, full in self.abbr_map.items():
@@ -95,29 +103,34 @@ class SmartSearcher:
             if not doc['lines'] or doc['embeddings'] is None:
                 continue
 
+            all_lines = [entry['text'] for entry in doc['lines']]
             scores = util.pytorch_cos_sim(query_embedding, doc['embeddings'])[0]
             ranked = sorted(zip(scores, doc['lines']), key=lambda x: x[0], reverse=True)
             top_semantic = [(float(s), l) for s, l in ranked[:top_k]]
 
             fuzzy_scores = []
-            for line in doc['lines']:
-                fuzz_score = fuzz.partial_ratio(query_expanded.lower(), line.lower())
+            for entry in doc['lines']:
+                fuzz_score = fuzz.partial_ratio(query_expanded.lower(), entry['text'].lower())
                 if fuzz_score >= self.threshold:
-                    fuzzy_scores.append((fuzz_score / 100.0, line))
+                    fuzzy_scores.append((fuzz_score / 100.0, entry))
 
-            combined = {l: max(s1, s2) for s1, l in top_semantic for s2, l2 in fuzzy_scores if l == l2}
-            for s, l in top_semantic + fuzzy_scores:
-                if l not in combined:
-                    combined[l] = s
+            combined = {}
+            for s, entry in top_semantic + fuzzy_scores:
+                key = (entry['text'], entry['page'], entry['line_num'])
+                if key in combined:
+                    combined[key] = max(combined[key], s)
+                else:
+                    combined[key] = s
 
             ranked_combined = sorted(combined.items(), key=lambda x: x[1], reverse=True)[:top_k]
 
-            for score, line in ranked_combined:
+            for (text, page, line_num), score in ranked_combined:
                 results.append({
                     'document': doc['name'],
-                    'line': line,
+                    'line': text,
+                    'page': page,
+                    'line_num': line_num,
                     'score': score
                 })
 
-        # Optionally sort all results by score and take top_k
         return sorted(results, key=lambda x: x['score'], reverse=True)[:top_k]
