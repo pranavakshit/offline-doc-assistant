@@ -11,4 +11,6 @@ results/
 *.csv
 *.json
 config_local.yaml
+/models/
 /docs/
+test.py

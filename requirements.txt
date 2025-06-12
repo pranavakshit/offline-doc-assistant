@@ -1,4 +1,6 @@
+# requirements.txt
 llama-cpp-python
+llama-stack
 sentence-transformers
 tqdm
 faiss-cpu
@@ -17,3 +19,4 @@ streamlit
 nltk
 scikit-learn
 spacy
+safetensors
