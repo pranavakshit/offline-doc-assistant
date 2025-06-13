@@ -14,3 +14,4 @@ config_local.yaml
 /models/
 /docs/
 test.py
+folder_structure.txt
