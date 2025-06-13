@@ -1,5 +1,8 @@
 # main.py
 from search.search_engine import SmartSearcher
+from llama_cpp import Llama
+from chat.document_chat import DocumentChatEngine
+
 
 def print_results(results):
     print("\n🔍 Top Search Results:\n")
@@ -12,6 +15,7 @@ def print_results(results):
             print(f"   Score: {float(score):.3f}\n")
         except (TypeError, ValueError):
             print(f"   Score: {score}\n")
+
 
 def collect_feedback(searcher, query, results):
     print("💬 Provide feedback on the results:")
@@ -30,17 +34,48 @@ def collect_feedback(searcher, query, results):
             if 0 <= idx < len(results):
                 searcher.save_user_feedback(query, results[idx]['line'], True)
 
+
 def main():
     searcher = SmartSearcher()
+
+    llm = Llama(
+        model_path="models/mistral-7b-instruct-v0.2.Q4_K_M.gguf",
+        n_ctx=4096,
+        n_threads=8,
+        n_gpu_layers=35,
+        use_mlock=True
+    )
+
+    chat_engine = DocumentChatEngine(model=llm, searcher=searcher)
+
     print("📁 AI-Based Local Document Search\n")
 
     while True:
         query = input("🔎 Enter your search query (or type 'exit' to quit): ").strip()
         if query.lower() == 'exit':
             break
+
         results = searcher.search(query)
         print_results(results)
         collect_feedback(searcher, query, results)
+
+        # Ask if user wants to rephrase a specific result
+        select_input = input("✏️ Enter the result number to rephrase (or 'skip'): ").strip().lower()
+        if select_input.isdigit():
+            idx = int(select_input) - 1
+            if 0 <= idx < len(results):
+                tone = input("🎯 Enter desired tone (e.g., formal, casual, assertive, technical, persuasive, poetic, empathetic): ").strip().lower()
+                rephrased = chat_engine.rephrase_line(results[idx]['line'], tone=tone)
+                print("\n🗣️ Rephrased Result:")
+                print(rephrased)
+
+        summarize = input("🧠 Would you like a summary of the search results? (yes/no): ").strip().lower()
+        if summarize in ['yes', 'y']:
+            context = [r['line'] for r in results]
+            summary = chat_engine.summarize_context(context_lines=context, query=query)
+            print("\n📋 Summary:")
+            print(summary)
+
 
 if __name__ == "__main__":
     main()

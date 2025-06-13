@@ -1,8 +1,6 @@
-# search/search_engine.py
 import os
 import re
 import yaml
-import json
 from collections import defaultdict
 
 from sentence_transformers import SentenceTransformer, util
@@ -29,9 +27,12 @@ class SmartSearcher:
             self.reader = None
 
         self.embedder = SentenceTransformer(self.config['embedding_model'])
-        self.abbr_map = self.config['abbreviation_mapping']
-        self.threshold = self.config['fuzzy_match_threshold']
-        self.docs_folder = self.config['input_folder']
+
+        # Ensure abbreviation map exists
+        self.abbr_map = self.config.get('abbreviation_mapping', {})
+
+        self.threshold = self.config.get('fuzzy_match_threshold', 80)
+        self.docs_folder = self.config.get('input_folder', 'documents')
 
         self.feedback_handler = FeedbackHandler(self.config.get('feedback_storage', 'results/feedback.json'))
         self.load_documents()
