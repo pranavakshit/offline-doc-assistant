@@ -6,16 +6,14 @@ A powerful offline AI assistant for documents. Supports chatting with files, OCR
 
 ## 🚀 Features
 
-### 👤 Pranav Akshit
-1. Chat with Document – Ask questions and get answers from a document's content  
-2. Context Isolation – Multiple unrelated documents handled independently  
-3. Rephrasing – Reword content into different tones like formal, simplified, bullet, etc.  
-
-### 👩‍💻 Ananya Rana
-4. Smart Search – Tolerant of typos, abbreviations, and scanned PDFs via OCR  
-5. Feedback-Based Learning – Remembers user choices to improve future relevance  
-6. Ranked Results – Combines fuzzy match, semantic similarity, and feedback scores  
-7. Summarization – Provides concise or detailed summaries of full or partial documents  
+1. **Chat with Document** – Ask questions and get answers from a document's content  
+2. **Context Isolation** – Multiple unrelated documents handled independently  
+3. **OCR** – Optical Character Recognition for scanned PDFs and image-based documents  
+4. **Smart Search** – Tolerant of typos, abbreviations, and scanned PDFs via OCR  
+5. **Feedback-Based Learning** – Remembers user choices to improve future relevance  
+6. **Ranked Results** – Combines fuzzy match, semantic similarity, and feedback scores  
+7. **Summarization** – Provides concise or detailed summaries of full or partial documents
+8. **Rephrasing** – Reword content into different tones like formal, simplified, bullet, etc.  
 
 ---
 
@@ -32,7 +30,7 @@ A powerful offline AI assistant for documents. Supports chatting with files, OCR
 |----------------------|------------------------------|
 | OCR                  | Tesseract / EasyOCR          |
 | Embedding            | sentence-transformers        |
-| LLM                  | LLaMA 3.1 8B (llama.cpp)    |
+| LLM                  | Mistral 7B Instruct (llama.cpp) |
 | Summarization        | t5-small or bart             |
 | Feedback Store       | Local JSON / SQLite          |
 | UI                   | CLI or Tkinter (optional)    |
@@ -69,5 +67,5 @@ Fully local processing, no cloud.
 
 ## 👥 Authors
 
-- Pranav Akshit – Chat, Rephrasing, Context Isolation  
-- Ananya Rana – Smart Search, Feedback Learning, Summarization
+- Pranav Akshit – Chat, Context Isolation, OCR  
+- Ananya Rana – Smart Search, Feedback Learning, Summarization, Rephrasing
