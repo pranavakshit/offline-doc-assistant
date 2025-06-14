@@ -1,7 +1,13 @@
 # main.py
+import os
+import sys
 from search.search_engine import SmartSearcher
 from llama_cpp import Llama
 from chat.document_chat import DocumentChatEngine
+
+# Suppress llama.cpp verbose output
+os.environ['LLAMA_CPP_LOG_LEVEL'] = '0'  # Set to 0 to disable logging
+sys.stderr = open(os.devnull, 'w')  # Redirect stderr to suppress performance prints
 
 
 def print_results(results):
@@ -51,7 +57,8 @@ def main():
         n_ctx=4096,
         n_threads=8,
         n_gpu_layers=35,
-        use_mlock=True
+        use_mlock=True,
+        verbose=False  # Disable verbose output
     )
 
     chat_engine = DocumentChatEngine(model=llm, searcher=searcher)
