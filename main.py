@@ -7,14 +7,22 @@ from chat.document_chat import DocumentChatEngine
 def print_results(results):
     print("\n🔍 Top Search Results:\n")
     for idx, result in enumerate(results, 1):
-        print(f"{idx}. [Doc: {result.get('document', 'N/A')}]")
-        print(f"   Page: {result.get('page', 'N/A')} | Line: {result.get('line_num', 'N/A')}")
-        print(f"   Text: {result.get('line', 'N/A')}")
+        print(f"{'=' * 60}")
+        print(f"Result {idx}: [Doc: {result.get('document', 'N/A')}]")
+        print(f"Page: {result.get('page', 'N/A')} | Line: {result.get('line_num', 'N/A')}")
         score = result.get('score', None)
         try:
-            print(f"   Score: {float(score):.3f}\n")
+            print(f"Score: {float(score):.3f}")
         except (TypeError, ValueError):
-            print(f"   Score: {score}\n")
+            print(f"Score: {score}")
+
+        print(f"\n📄 Context:")
+        print("-" * 40)
+        # Display the enhanced context instead of just the single line
+        context = result.get('context', result.get('line', 'N/A'))
+        print(context)
+        print("-" * 40)
+        print()
 
 
 def collect_feedback(searcher, query, results):
@@ -50,14 +58,29 @@ def main():
 
     print("📁 AI-Based Local Document Search\n")
     print(f"Available summary lengths: {', '.join(chat_engine.get_available_summary_lengths())}")
+    print("Context modes: lines (surrounding lines), paragraph (full paragraph), snippet (matched line only)")
     print()
+
+    # Default context mode
+    context_mode = "lines"
 
     while True:
         query = input("🔎 Enter your search query (or type 'exit' to quit): ").strip()
         if query.lower() == 'exit':
             break
 
-        results = searcher.search(query)
+        # Check if user wants to change context mode
+        if query.lower().startswith('context:'):
+            mode = query.split(':', 1)[1].strip().lower()
+            if mode in ['lines', 'paragraph', 'snippet']:
+                context_mode = mode
+                print(f"✅ Context mode set to: {context_mode}")
+                continue
+            else:
+                print("❌ Invalid context mode. Use: lines, paragraph, or snippet")
+                continue
+
+        results = searcher.search(query, context_mode=context_mode)
         print_results(results)
         collect_feedback(searcher, query, results)
 
@@ -68,7 +91,9 @@ def main():
             if 0 <= idx < len(results):
                 tone = input(
                     "🎯 Enter desired tone (e.g., formal, casual, assertive, technical, persuasive, poetic, empathetic): ").strip().lower()
-                rephrased = chat_engine.rephrase_line(results[idx]['line'], tone=tone)
+                # Use the context for rephrasing instead of just the single line
+                text_to_rephrase = results[idx].get('context', results[idx]['line'])
+                rephrased = chat_engine.rephrase_line(text_to_rephrase, tone=tone)
                 print("\n🗣️ Rephrased Result:")
                 print(rephrased)
 
@@ -83,6 +108,9 @@ def main():
             summary = chat_engine.summarize_search_results(results, query, length)
             print("\n📋 Summary:")
             print(summary)
+
+        print(
+            f"\n💡 Tip: Type 'context:paragraph' or 'context:lines' or 'context:snippet' to change how much text is shown")
 
 
 if __name__ == "__main__":

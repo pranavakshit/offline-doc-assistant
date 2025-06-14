@@ -12,6 +12,7 @@ torch
 fuzzywuzzy
 python-Levenshtein
 easyocr
+hf_xet
 pdf2image
 PyYAML
 pillow

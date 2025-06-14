@@ -27,6 +27,11 @@ abbreviation_mapping:
 
 fuzzy_match_threshold: 85
 
+# Context display settings
+context_lines_before: 3      # Number of lines to show before the matched line
+context_lines_after: 3       # Number of lines to show after the matched line
+max_context_chars: 800       # Maximum characters to display in context
+
 summary_model: "t5-small"
 summary_length: "medium"
 rephrase_styles:

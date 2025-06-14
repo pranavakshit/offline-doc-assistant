@@ -34,6 +34,11 @@ class SmartSearcher:
         self.threshold = self.config.get('fuzzy_match_threshold', 80)
         self.docs_folder = self.config.get('input_folder', 'documents')
 
+        # Context settings
+        self.context_lines_before = self.config.get('context_lines_before', 2)
+        self.context_lines_after = self.config.get('context_lines_after', 2)
+        self.max_context_chars = self.config.get('max_context_chars', 500)
+
         self.feedback_handler = FeedbackHandler(self.config.get('feedback_storage', 'results/feedback.json'))
         self.load_documents()
 
@@ -91,11 +96,71 @@ class SmartSearcher:
             text = re.sub(pattern, full, text, flags=re.IGNORECASE)
         return text
 
+    def get_context_around_line(self, doc_lines, target_index, page_num):
+        """Get context lines around a target line"""
+        start_idx = max(0, target_index - self.context_lines_before)
+        end_idx = min(len(doc_lines), target_index + self.context_lines_after + 1)
+
+        context_lines = []
+        for i in range(start_idx, end_idx):
+            # Only include lines from the same page
+            if doc_lines[i]['page'] == page_num:
+                prefix = ">>> " if i == target_index else "    "
+                context_lines.append(f"{prefix}{doc_lines[i]['text']}")
+
+        context_text = '\n'.join(context_lines)
+
+        # Truncate if too long
+        if len(context_text) > self.max_context_chars:
+            context_text = context_text[:self.max_context_chars] + "..."
+
+        return context_text
+
+    def get_paragraph_context(self, doc_lines, target_index):
+        """Get the full paragraph containing the target line"""
+        # Find paragraph boundaries (empty lines or significant text breaks)
+        start_idx = target_index
+        end_idx = target_index
+
+        # Go backwards to find paragraph start
+        while start_idx > 0:
+            if not doc_lines[start_idx - 1]['text'].strip() or len(doc_lines[start_idx - 1]['text']) < 10:
+                break
+            start_idx -= 1
+
+        # Go forwards to find paragraph end
+        while end_idx < len(doc_lines) - 1:
+            if not doc_lines[end_idx + 1]['text'].strip() or len(doc_lines[end_idx + 1]['text']) < 10:
+                break
+            end_idx += 1
+
+        # Combine paragraph lines
+        paragraph_lines = []
+        for i in range(start_idx, end_idx + 1):
+            if doc_lines[i]['text'].strip():
+                prefix = ">>> " if i == target_index else "    "
+                paragraph_lines.append(f"{prefix}{doc_lines[i]['text']}")
+
+        paragraph_text = '\n'.join(paragraph_lines)
+
+        # Truncate if too long
+        if len(paragraph_text) > self.max_context_chars:
+            paragraph_text = paragraph_text[:self.max_context_chars] + "..."
+
+        return paragraph_text
+
     def save_user_feedback(self, query, matched_line, is_relevant):
         if self.config.get('feedback_enabled', True):
             self.feedback_handler.save_feedback(query, matched_line, is_relevant)
 
-    def search(self, query, top_k=5):
+    def search(self, query, top_k=5, context_mode='lines'):
+        """
+        Search with enhanced context display
+        context_mode options:
+        - 'lines': Show surrounding lines (default)
+        - 'paragraph': Show full paragraph
+        - 'snippet': Show matched line only (original behavior)
+        """
         query_expanded = self.expand_abbreviations(query)
         query_embedding = self.embedder.encode(query_expanded, convert_to_tensor=True)
         results = []
@@ -106,32 +171,45 @@ class SmartSearcher:
 
             all_lines = [entry['text'] for entry in doc['lines']]
             scores = util.pytorch_cos_sim(query_embedding, doc['embeddings'])[0]
-            ranked = sorted(zip(scores, doc['lines']), key=lambda x: x[0], reverse=True)
-            top_semantic = [(float(s), l) for s, l in ranked[:top_k]]
+            ranked = sorted(zip(scores, enumerate(doc['lines'])), key=lambda x: x[0], reverse=True)
+            top_semantic = [(float(s), idx, l) for s, (idx, l) in ranked[:top_k]]
 
             fuzzy_scores = []
-            for entry in doc['lines']:
+            for idx, entry in enumerate(doc['lines']):
                 fuzz_score = fuzz.partial_ratio(query_expanded.lower(), entry['text'].lower())
                 if fuzz_score >= self.threshold:
-                    fuzzy_scores.append((fuzz_score / 100.0, entry))
+                    fuzzy_scores.append((fuzz_score / 100.0, idx, entry))
 
             combined = {}
-            for s, entry in top_semantic + fuzzy_scores:
+            for s, idx, entry in top_semantic + fuzzy_scores:
                 key = (entry['text'], entry['page'], entry['line_num'])
                 if key in combined:
-                    combined[key] = max(combined[key], s)
+                    if combined[key]['score'] < s:
+                        combined[key] = {'score': s, 'index': idx, 'entry': entry}
                 else:
-                    combined[key] = s
+                    combined[key] = {'score': s, 'index': idx, 'entry': entry}
 
-            ranked_combined = sorted(combined.items(), key=lambda x: x[1], reverse=True)[:top_k]
+            ranked_combined = sorted(combined.items(), key=lambda x: x[1]['score'], reverse=True)[:top_k]
 
-            for (text, page, line_num), score in ranked_combined:
+            for (text, page, line_num), data in ranked_combined:
+                entry = data['entry']
+                idx = data['index']
+
+                # Generate context based on mode
+                if context_mode == 'paragraph':
+                    context_text = self.get_paragraph_context(doc['lines'], idx)
+                elif context_mode == 'lines':
+                    context_text = self.get_context_around_line(doc['lines'], idx, page)
+                else:  # snippet
+                    context_text = text
+
                 results.append({
                     'document': doc['name'],
-                    'line': text,
+                    'line': text,  # Original matched line
+                    'context': context_text,  # Extended context
                     'page': page,
                     'line_num': line_num,
-                    'score': score
+                    'score': data['score']
                 })
 
         return sorted(results, key=lambda x: x['score'], reverse=True)[:top_k]
