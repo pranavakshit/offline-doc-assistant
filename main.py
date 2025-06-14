@@ -4,6 +4,12 @@ import sys
 from search.search_engine import SmartSearcher
 from llama_cpp import Llama
 from chat.document_chat import DocumentChatEngine
+from utils.progress_utils import (
+    loading_progress,
+    rephrasing_progress,
+    summarizing_progress,
+    search_progress
+)
 
 # Suppress llama.cpp verbose output
 os.environ['LLAMA_CPP_LOG_LEVEL'] = '0'  # Set to 0 to disable logging
@@ -49,23 +55,59 @@ def collect_feedback(searcher, query, results):
                 searcher.save_user_feedback(query, results[idx]['line'], True)
 
 
-def main():
-    searcher = SmartSearcher()
+def initialize_system():
+    """Initialize the search system and LLM with progress tracking"""
+    print("🚀 Starting AI-Based Local Document Search System...")
 
-    llm = Llama(
-        model_path="models/mistral-7b-instruct-v0.2.Q4_K_M.gguf",
-        n_ctx=4096,
-        n_threads=8,
-        n_gpu_layers=35,
-        use_mlock=True,
-        verbose=False  # Disable verbose output
-    )
+    # Initialize searcher with progress tracking
+    print("📚 Loading documents and building search index...")
+    with loading_progress():
+        searcher = SmartSearcher()
 
+    print("🤖 Loading AI language model...")
+    with loading_progress():
+        llm = Llama(
+            model_path="models/mistral-7b-instruct-v0.2.Q4_K_M.gguf",
+            n_ctx=4096,
+            n_threads=8,
+            n_gpu_layers=35,
+            use_mlock=True,
+            verbose=False  # Disable verbose output
+        )
+
+    print("🔧 Initializing chat engine...")
     chat_engine = DocumentChatEngine(model=llm, searcher=searcher)
+
+    print("✅ System initialization complete!\n")
+    return searcher, chat_engine
+
+
+def perform_search(searcher, query, context_mode="lines"):
+    """Perform search with progress tracking"""
+    with search_progress():
+        return searcher.search(query, context_mode=context_mode)
+
+
+def rephrase_text(chat_engine, text, tone):
+    """Rephrase text with progress tracking"""
+    with rephrasing_progress():
+        return chat_engine.rephrase_line(text, tone=tone)
+
+
+def generate_summary(chat_engine, results, query, length=None):
+    """Generate summary with progress tracking"""
+    with summarizing_progress():
+        return chat_engine.summarize_search_results(results, query, length)
+
+
+def main():
+    # Initialize system with progress bars
+    searcher, chat_engine = initialize_system()
 
     print("📁 AI-Based Local Document Search\n")
     print(f"Available summary lengths: {', '.join(chat_engine.get_available_summary_lengths())}")
     print("Context modes: lines (surrounding lines), paragraph (full paragraph), snippet (matched line only)")
+    print("💡 Tip: Progress bars will appear automatically for longer operations")
     print()
 
     # Default context mode
@@ -87,7 +129,8 @@ def main():
                 print("❌ Invalid context mode. Use: lines, paragraph, or snippet")
                 continue
 
-        results = searcher.search(query, context_mode=context_mode)
+        # Perform search with progress tracking
+        results = perform_search(searcher, query, context_mode)
         print_results(results)
         collect_feedback(searcher, query, results)
 
@@ -100,7 +143,9 @@ def main():
                     "🎯 Enter desired tone (e.g., formal, casual, assertive, technical, persuasive, poetic, empathetic): ").strip().lower()
                 # Use the context for rephrasing instead of just the single line
                 text_to_rephrase = results[idx].get('context', results[idx]['line'])
-                rephrased = chat_engine.rephrase_line(text_to_rephrase, tone=tone)
+
+                # Rephrase with progress tracking
+                rephrased = rephrase_text(chat_engine, text_to_rephrase, tone)
                 print("\n🗣️ Rephrased Result:")
                 print(rephrased)
 
@@ -112,7 +157,8 @@ def main():
             if not length:
                 length = None
 
-            summary = chat_engine.summarize_search_results(results, query, length)
+            # Generate summary with progress tracking
+            summary = generate_summary(chat_engine, results, query, length)
             print("\n📋 Summary:")
             print(summary)
 

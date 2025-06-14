@@ -9,8 +9,10 @@ import easyocr
 from PyPDF2 import PdfReader
 from docx import Document
 from pdf2image import convert_from_path
+from tqdm import tqdm
 
 from feedback.feedback_handler import FeedbackHandler
+from utils.progress_utils import ProgressBarManager, ocr_progress
 
 
 class SmartSearcher:
@@ -22,10 +24,12 @@ class SmartSearcher:
             langs = self.config.get('ocr_languages', ['en'])
             if not isinstance(langs, (list, tuple)):
                 langs = [langs]
+            print("🔧 Initializing OCR engine...")
             self.reader = easyocr.Reader(langs)
         else:
             self.reader = None
 
+        print("🧠 Loading embedding model...")
         self.embedder = SentenceTransformer(self.config['embedding_model'])
 
         # Ensure abbreviation map exists
@@ -43,52 +47,94 @@ class SmartSearcher:
         self.load_documents()
 
     def load_documents(self):
-        self.doc_data = []
+        """Load documents with progress tracking"""
+        print("📚 Scanning document folder...")
+
+        # Get list of supported files
+        supported_files = []
         for fname in os.listdir(self.docs_folder):
+            if fname.lower().endswith(('.txt', '.docx', '.pdf')):
+                supported_files.append(fname)
+
+        if not supported_files:
+            print("⚠️ No supported documents found in the docs folder")
+            self.doc_data = []
+            return
+
+        print(f"📄 Found {len(supported_files)} documents to process")
+
+        # Initialize document loading progress bar
+        doc_progress = ProgressBarManager.document_loading_progress(total_docs=len(supported_files))
+
+        self.doc_data = []
+        total_lines_processed = 0
+
+        for fname in supported_files:
             fpath = os.path.join(self.docs_folder, fname)
+            doc_progress.set_description(f"📚 Loading {fname}")
+
             line_info = []
 
-            if fname.endswith('.txt'):
-                with open(fpath, 'r', encoding='utf-8') as f:
-                    lines = f.readlines()
-                for idx, line in enumerate(lines):
-                    line_info.append({'text': line.strip(), 'page': 1, 'line_num': idx + 1})
+            try:
+                if fname.endswith('.txt'):
+                    with open(fpath, 'r', encoding='utf-8') as f:
+                        lines = f.readlines()
+                    for idx, line in enumerate(lines):
+                        line_info.append({'text': line.strip(), 'page': 1, 'line_num': idx + 1})
 
-            elif fname.endswith('.docx'):
-                doc = Document(fpath)
-                lines = [p.text for p in doc.paragraphs if p.text.strip()]
-                for idx, line in enumerate(lines):
-                    line_info.append({'text': line.strip(), 'page': 1, 'line_num': idx + 1})
+                elif fname.endswith('.docx'):
+                    doc = Document(fpath)
+                    lines = [p.text for p in doc.paragraphs if p.text.strip()]
+                    for idx, line in enumerate(lines):
+                        line_info.append({'text': line.strip(), 'page': 1, 'line_num': idx + 1})
 
-            elif fname.endswith('.pdf'):
-                reader = PdfReader(fpath)
-                for pageno, page in enumerate(reader.pages, start=1):
-                    text = page.extract_text()
-                    if (not text or text.isspace()) and self.reader:
-                        ocr_lines = self.extract_text_with_ocr(fpath, pageno)
-                        for lineno, line in enumerate(ocr_lines, start=1):
-                            line_info.append({'text': line.strip(), 'page': pageno, 'line_num': lineno})
-                    else:
-                        lines = text.split('\n') if text else []
-                        for lineno, line in enumerate(lines, start=1):
-                            line_info.append({'text': line.strip(), 'page': pageno, 'line_num': lineno})
-            else:
+                elif fname.endswith('.pdf'):
+                    reader = PdfReader(fpath)
+                    for pageno, page in enumerate(reader.pages, start=1):
+                        text = page.extract_text()
+                        if (not text or text.isspace()) and self.reader:
+                            # Use OCR with progress indication
+                            doc_progress.set_description(f"👁️ OCR processing {fname} (page {pageno})")
+                            ocr_lines = self.extract_text_with_ocr(fpath, pageno)
+                            for lineno, line in enumerate(ocr_lines, start=1):
+                                line_info.append({'text': line.strip(), 'page': pageno, 'line_num': lineno})
+                        else:
+                            lines = text.split('\n') if text else []
+                            for lineno, line in enumerate(lines, start=1):
+                                line_info.append({'text': line.strip(), 'page': pageno, 'line_num': lineno})
+
+                # Generate embeddings for this document
+                all_lines = [entry['text'] for entry in line_info if entry['text'].strip()]
+                if all_lines:
+                    doc_progress.set_description(f"🧠 Generating embeddings for {fname}")
+                    embeddings = self.embedder.encode(all_lines, convert_to_tensor=True)
+                    total_lines_processed += len(all_lines)
+                else:
+                    embeddings = None
+
+                self.doc_data.append({
+                    'name': fname,
+                    'lines': line_info,
+                    'embeddings': embeddings
+                })
+
+                doc_progress.update(1)
+
+            except Exception as e:
+                print(f"\n❌ Error processing {fname}: {e}")
+                doc_progress.update(1)
                 continue
 
-            all_lines = [entry['text'] for entry in line_info]
-            embeddings = self.embedder.encode(all_lines, convert_to_tensor=True) if all_lines else None
-
-            self.doc_data.append({
-                'name': fname,
-                'lines': line_info,
-                'embeddings': embeddings
-            })
+        doc_progress.close()
+        print(f"✅ Successfully processed {len(self.doc_data)} documents ({total_lines_processed} lines total)")
 
     def extract_text_with_ocr(self, pdf_path, page_number):
-        pages = convert_from_path(pdf_path)
-        result = self.reader.readtext(pages[page_number - 1])
-        text = ' '.join([x[1] for x in result])
-        return text.split('\n')
+        """Extract text using OCR with progress indication"""
+        with ocr_progress():
+            pages = convert_from_path(pdf_path)
+            result = self.reader.readtext(pages[page_number - 1])
+            text = ' '.join([x[1] for x in result])
+            return text.split('\n')
 
     def expand_abbreviations(self, text):
         for abbr, full in self.abbr_map.items():
@@ -165,7 +211,19 @@ class SmartSearcher:
         query_embedding = self.embedder.encode(query_expanded, convert_to_tensor=True)
         results = []
 
-        for doc in self.doc_data:
+        # Show progress for search if there are many documents
+        if len(self.doc_data) > 5:
+            search_progress = tqdm(
+                self.doc_data,
+                desc="🔍 Searching documents",
+                unit="doc",
+                leave=False,
+                ncols=80
+            )
+        else:
+            search_progress = self.doc_data
+
+        for doc in search_progress:
             if not doc['lines'] or doc['embeddings'] is None:
                 continue
 
