@@ -2,6 +2,7 @@
 from chat.context_manager import ContextManager
 from chat.rephraser import Rephraser
 from search.search_engine import SmartSearcher
+from search.summarizer import DocumentSummarizer
 from feedback.feedback_handler import FeedbackHandler
 
 class DocumentChatEngine:
@@ -9,6 +10,7 @@ class DocumentChatEngine:
         self.context = ContextManager()
         self.rephraser = Rephraser(model)
         self.searcher = searcher
+        self.summarizer = DocumentSummarizer(model)
         self.feedback_handler = FeedbackHandler()
         self.model = model
 
@@ -24,15 +26,21 @@ class DocumentChatEngine:
     def add_feedback(self, feedback_text):
         self.feedback_handler.handle_feedback(feedback_text)
 
-    def summarize_context(self, context_lines, query):
-        prompt = (
-            "You are an assistant summarizing document excerpts based on a user query.\n"
-            f"### Context:\n{chr(10).join(context_lines)}\n\n"
-            f"### Query:\n{query}\n\n"
-            "### Summary:"
-        )
-        response = self.model(prompt, max_tokens=300, stop=["###", "</s>"])
-        return response["choices"][0]["text"].strip()
+    def summarize_search_results(self, search_results, query, length=None):
+        """Summarize search results using dedicated summarizer"""
+        return self.summarizer.summarize_search_results(search_results, query, length)
+
+    def summarize_context(self, context_lines, query, length=None):
+        """Summarize document content using dedicated summarizer"""
+        return self.summarizer.summarize_document_content(context_lines, query, length)
 
     def rephrase_line(self, line, tone="formal"):
         return self.rephraser.rephrase(line, tone)
+
+    def get_available_summary_lengths(self):
+        """Get available summary length options"""
+        return self.summarizer.get_available_lengths()
+
+    def set_summary_length(self, length):
+        """Set default summary length"""
+        return self.summarizer.set_summary_length(length)

@@ -49,6 +49,8 @@ def main():
     chat_engine = DocumentChatEngine(model=llm, searcher=searcher)
 
     print("📁 AI-Based Local Document Search\n")
+    print(f"Available summary lengths: {', '.join(chat_engine.get_available_summary_lengths())}")
+    print()
 
     while True:
         query = input("🔎 Enter your search query (or type 'exit' to quit): ").strip()
@@ -64,15 +66,21 @@ def main():
         if select_input.isdigit():
             idx = int(select_input) - 1
             if 0 <= idx < len(results):
-                tone = input("🎯 Enter desired tone (e.g., formal, casual, assertive, technical, persuasive, poetic, empathetic): ").strip().lower()
+                tone = input(
+                    "🎯 Enter desired tone (e.g., formal, casual, assertive, technical, persuasive, poetic, empathetic): ").strip().lower()
                 rephrased = chat_engine.rephrase_line(results[idx]['line'], tone=tone)
                 print("\n🗣️ Rephrased Result:")
                 print(rephrased)
 
         summarize = input("🧠 Would you like a summary of the search results? (yes/no): ").strip().lower()
         if summarize in ['yes', 'y']:
-            context = [r['line'] for r in results]
-            summary = chat_engine.summarize_context(context_lines=context, query=query)
+            # Ask for summary length
+            length = input(
+                f"📏 Summary length ({'/'.join(chat_engine.get_available_summary_lengths())}) [default: medium]: ").strip().lower()
+            if not length:
+                length = None
+
+            summary = chat_engine.summarize_search_results(results, query, length)
             print("\n📋 Summary:")
             print(summary)
 
