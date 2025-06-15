@@ -1,5 +1,6 @@
 # search/summarizer.py
 import yaml
+from utils.progress_utils import dynamic_progress
 
 
 class DocumentSummarizer:
@@ -18,7 +19,7 @@ class DocumentSummarizer:
         }
 
     def summarize_search_results(self, search_results, query, length=None):
-        """Summarize search results based on query"""
+        """Summarize search results based on query with progress tracking"""
         if not search_results:
             return "No search results to summarize."
 
@@ -37,16 +38,23 @@ class DocumentSummarizer:
 
         prompt = self._build_summary_prompt(context_with_metadata, query, config['description'])
 
-        response = self.model(
-            prompt,
-            max_tokens=config['max_tokens'],
-            stop=["###", "</s>", "\n\n---"]
-        )
+        # Use progress bar for longer summaries or when processing many results
+        progress_delay = 1.0 if len(search_results) > 3 or config['max_tokens'] > 300 else 0.5
+
+        with dynamic_progress(
+                desc=f"📋 Generating {config['description']} summary",
+                delay=progress_delay
+        ):
+            response = self.model(
+                prompt,
+                max_tokens=config['max_tokens'],
+                stop=["###", "</s>", "\n\n---"]
+            )
 
         return response["choices"][0]["text"].strip()
 
     def summarize_document_content(self, context_lines, query=None, length=None):
-        """Summarize general document content"""
+        """Summarize general document content with progress tracking"""
         if not context_lines:
             return "No content to summarize."
 
@@ -58,13 +66,59 @@ class DocumentSummarizer:
         else:
             prompt = self._build_general_summary_prompt(context_lines, config['description'])
 
-        response = self.model(
-            prompt,
-            max_tokens=config['max_tokens'],
-            stop=["###", "</s>", "\n\n---"]
-        )
+        # Determine progress delay based on content length and summary complexity
+        content_length = sum(len(line) for line in context_lines)
+        progress_delay = 1.5 if content_length > 2000 or config['max_tokens'] > 400 else 1.0
+
+        desc = f"📋 Summarizing document content ({config['description']})"
+        if query:
+            desc = f"📋 Creating query-based summary ({config['description']})"
+
+        with dynamic_progress(desc=desc, delay=progress_delay):
+            response = self.model(
+                prompt,
+                max_tokens=config['max_tokens'],
+                stop=["###", "</s>", "\n\n---"]
+            )
 
         return response["choices"][0]["text"].strip()
+
+    def batch_summarize(self, multiple_contexts, queries=None, length=None):
+        """Summarize multiple document contexts with progress tracking"""
+        if not multiple_contexts:
+            return []
+
+        length = length or self.summary_length
+        config = self.length_configs.get(length, self.length_configs['medium'])
+
+        summaries = []
+
+        # Use tqdm for batch processing
+        from tqdm import tqdm
+
+        progress_bar = tqdm(
+            multiple_contexts,
+            desc=f"📋 Batch summarizing ({config['description']})",
+            unit="doc",
+            ncols=80,
+            bar_format='{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}]'
+        )
+
+        for i, context in enumerate(progress_bar):
+            query = queries[i] if queries and i < len(queries) else None
+
+            # Update progress description for current document
+            progress_bar.set_description(f"📋 Summarizing document {i + 1}/{len(multiple_contexts)}")
+
+            if query:
+                summary = self.summarize_document_content(context, query, length)
+            else:
+                summary = self.summarize_document_content(context, length=length)
+
+            summaries.append(summary)
+
+        progress_bar.close()
+        return summaries
 
     def _build_summary_prompt(self, context_with_metadata, query, length_desc):
         """Build prompt for search results summary"""
