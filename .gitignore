@@ -16,3 +16,4 @@ config_local.yaml
 test.py
 folder_structure.txt
 .vs
+.tmp.driveupload
