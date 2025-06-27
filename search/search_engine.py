@@ -11,6 +11,7 @@ from docx import Document
 from pdf2image import convert_from_path
 
 from feedback.feedback_handler import FeedbackHandler
+from search.ranker import rank_results
 
 
 class SmartSearcher:
@@ -26,7 +27,7 @@ class SmartSearcher:
         else:
             self.reader = None
 
-        self.embedder = SentenceTransformer(self.config['embedding_model'])
+        self.embedder = SentenceTransformer(self.config['embedding_model'], local_files_only=True)
 
         # Ensure abbreviation map exists
         self.abbr_map = self.config.get('abbreviation_mapping', {})
@@ -212,4 +213,5 @@ class SmartSearcher:
                     'score': data['score']
                 })
 
-        return sorted(results, key=lambda x: x['score'], reverse=True)[:top_k]
+        # Use the external ranker to sort results
+        return rank_results(results)[:top_k]
