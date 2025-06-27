@@ -15,3 +15,5 @@ config_local.yaml
 /docs/
 test.py
 folder_structure.txt
+chunks_cache.txt
+chunks_cache.txt.meta
