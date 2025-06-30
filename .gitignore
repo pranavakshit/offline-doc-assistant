@@ -17,3 +17,6 @@ test.py
 folder_structure.txt
 chunks_cache.txt
 chunks_cache.txt.meta
+.vs
+test_sentence_transformer.py
+from_sentence_transformers_import_Senten.py
