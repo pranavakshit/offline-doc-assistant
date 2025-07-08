@@ -14,11 +14,20 @@ class DocumentChatEngine:
         self.feedback_handler = FeedbackHandler()
         self.model = model
 
-    def chat(self, user_input, tone="formal"):
+    def chat(self, user_input, tone="formal", summary_length=None):
+        """
+        Answer user questions in natural language using document context.
+        1. Search for relevant results.
+        2. Summarize the results in a natural, conversational answer.
+        3. Add the turn to conversation history.
+        """
         raw_results = self.searcher.search(user_input)
-        rephrased = self.rephraser.rephrase("\n".join([r['line'] for r in raw_results]), tone=tone)
-        self.context.add_turn(user_input, rephrased)
-        return rephrased
+        # Use the summarizer to generate a natural language answer
+        answer = self.summarizer.summarize_search_results(
+            raw_results, user_input, length=summary_length
+        )
+        self.context.add_turn(user_input, answer)
+        return answer
 
     def get_history(self):
         return self.context.get_history()
