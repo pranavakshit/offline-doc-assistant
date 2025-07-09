@@ -13,6 +13,7 @@ results/
 config_local.yaml
 /models/
 /docs/
+/my-theme/*
 test.py
 folder_structure.txt
 chunks_cache.txt
