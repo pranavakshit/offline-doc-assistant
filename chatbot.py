@@ -1,6 +1,6 @@
-# test_chatbot.py
+# chatbot.py
 """
-Test script for DocumentChatEngine chatbot functionality.
+Entry point for DocumentChatEngine chatbot functionality.
 """
 from llama_cpp import Llama
 from search.search_engine import SmartSearcher
@@ -18,7 +18,7 @@ if __name__ == "__main__":
     )
     chatbot = DocumentChatEngine(model=llm, searcher=searcher)
 
-    print("\n🤖 Offline Document Chatbot Test\nType 'exit' to quit.\n")
+    print("\n🤖 Offline Document Chatbot\nType 'exit' to quit.\n")
     while True:
         user_input = input("You: ").strip()
         if user_input.lower() == "exit":
