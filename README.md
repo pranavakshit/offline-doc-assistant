@@ -157,6 +157,18 @@ python main.py
 
 ---
 
+## 🖥️ Graphical User Interface (Offline)
+
+You can use the offline GUI with Streamlit:
+
+```bash
+streamlit run gui_app.py
+```
+
+This launches a local web app for searching, chatting, summarizing, and rephrasing your documents – all offline.
+
+---
+
 ## 🔐 Privacy & Security
 
 - **100% Offline**: No internet connection required after setup
