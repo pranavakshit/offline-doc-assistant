@@ -64,53 +64,92 @@ def main():
     # Default context mode
     context_mode = "lines"
 
-    while True:
-        query = input("🔎 Enter your search query (or type 'exit' to quit): ").strip()
-        if query.lower() == 'exit':
-            break
+    def list_documents():
+        docs_dir = "docs"
+        docs = [f for f in os.listdir(docs_dir) if f.lower().endswith((".pdf", ".docx", ".txt"))]
+        print("\n� Indexed Documents:")
+        for i, doc in enumerate(docs, 1):
+            print(f"{i}. {doc}")
+        return docs
 
-        # Check if user wants to change context mode
-        if query.lower().startswith('context:'):
-            mode = query.split(':', 1)[1].strip().lower()
-            if mode in ['lines', 'paragraph', 'snippet']:
+    def remove_document():
+        docs = list_documents()
+        idx = input("Enter the number of the document to remove (or 'cancel'): ").strip()
+        if idx.isdigit():
+            idx = int(idx) - 1
+            if 0 <= idx < len(docs):
+                os.remove(os.path.join("docs", docs[idx]))
+                print(f"✅ Removed: {docs[idx]}")
+        else:
+            print("Cancelled.")
+
+    def reindex_documents():
+        print("🔄 Reindexing all documents...")
+        # Call your chunking/indexing logic here
+        from utils.file_loader import load_files
+        load_files("docs")
+        print("✅ Reindexing complete!")
+
+    import os
+
+    while True:
+        print("\nOptions:")
+        print("1. Search documents")
+        print("2. List indexed documents")
+        print("3. Remove a document")
+        print("4. Reindex all documents")
+        print("5. Change context mode")
+        print("6. Exit")
+        choice = input("Select an option (1-6): ").strip()
+
+        if choice == "6":
+            break
+        elif choice == "2":
+            list_documents()
+        elif choice == "3":
+            remove_document()
+        elif choice == "4":
+            reindex_documents()
+        elif choice == "5":
+            mode = input("Enter context mode (lines/paragraph/snippet): ").strip().lower()
+            if mode in ["lines", "paragraph", "snippet"]:
                 context_mode = mode
                 print(f"✅ Context mode set to: {context_mode}")
-                continue
             else:
                 print("❌ Invalid context mode. Use: lines, paragraph, or snippet")
+        elif choice == "1":
+            query = input("🔎 Enter your search query (or type 'back' to return): ").strip()
+            if query.lower() == "back":
                 continue
+            results = searcher.search(query, context_mode=context_mode)
+            print_results(results)
+            collect_feedback(searcher, query, results)
 
-        results = searcher.search(query, context_mode=context_mode)
-        print_results(results)
-        collect_feedback(searcher, query, results)
+            # Ask if user wants to rephrase a specific result
+            select_input = input("✏️ Enter the result number to rephrase (or 'skip'): ").strip().lower()
+            if select_input.isdigit():
+                idx = int(select_input) - 1
+                if 0 <= idx < len(results):
+                    tone = input(
+                        "🎯 Enter desired tone (e.g., formal, casual, assertive, technical, persuasive, poetic, empathetic): ").strip().lower()
+                    text_to_rephrase = results[idx].get('context', results[idx]['line'])
+                    rephrased = chat_engine.rephrase_line(text_to_rephrase, tone=tone)
+                    print("\n🗣️ Rephrased Result:")
+                    print(rephrased)
 
-        # Ask if user wants to rephrase a specific result
-        select_input = input("✏️ Enter the result number to rephrase (or 'skip'): ").strip().lower()
-        if select_input.isdigit():
-            idx = int(select_input) - 1
-            if 0 <= idx < len(results):
-                tone = input(
-                    "🎯 Enter desired tone (e.g., formal, casual, assertive, technical, persuasive, poetic, empathetic): ").strip().lower()
-                # Use the context for rephrasing instead of just the single line
-                text_to_rephrase = results[idx].get('context', results[idx]['line'])
-                rephrased = chat_engine.rephrase_line(text_to_rephrase, tone=tone)
-                print("\n🗣️ Rephrased Result:")
-                print(rephrased)
+            summarize = input("🧠 Would you like a summary of the search results? (yes/no): ").strip().lower()
+            if summarize in ['yes', 'y']:
+                length = input(
+                    f"📏 Summary length ({'/'.join(chat_engine.get_available_summary_lengths())}) [default: medium]: ").strip().lower()
+                if not length:
+                    length = None
 
-        summarize = input("🧠 Would you like a summary of the search results? (yes/no): ").strip().lower()
-        if summarize in ['yes', 'y']:
-            # Ask for summary length
-            length = input(
-                f"📏 Summary length ({'/'.join(chat_engine.get_available_summary_lengths())}) [default: medium]: ").strip().lower()
-            if not length:
-                length = None
+                summary = chat_engine.summarize_search_results(results, query, length)
+                print("\n📋 Summary:")
+                print(summary)
 
-            summary = chat_engine.summarize_search_results(results, query, length)
-            print("\n📋 Summary:")
-            print(summary)
-
-        print(
-            f"\n💡 Tip: Type 'context:paragraph' or 'context:lines' or 'context:snippet' to change how much text is shown")
+            print(
+                f"\n💡 Tip: Type 'context:paragraph' or 'context:lines' or 'context:snippet' to change how much text is shown")
 
 
 if __name__ == "__main__":

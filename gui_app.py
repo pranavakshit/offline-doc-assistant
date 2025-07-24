@@ -2,6 +2,7 @@ import streamlit as st
 from llama_cpp import Llama
 from search.search_engine import SmartSearcher
 from chat.document_chat import DocumentChatEngine
+import os
 
 st.set_page_config(page_title="Offline Document Assistant", layout="wide")
 
@@ -30,6 +31,7 @@ def inject_theme_css(mode):
             .stButton>button { color: #22223b !important; background-color: #fff !important; border: 1px solid #e2eeff !important; }
             .stButton>button:hover { background-color: #e2eeff !important; color: #1d3557 !important; }
             .stAlert, .stAlert p, .stAlert span, .stAlert div { color: #22223b !important; }
+            textarea, .stTextArea textarea { color: #22223b !important; background-color: #fff !important; }
             </style>
             """,
             unsafe_allow_html=True
@@ -62,6 +64,24 @@ with st.sidebar:
         st.rerun()
 
 # --- Session State Initialization ---
+import json
+search_history_path = os.path.join("results", "search_history.json")
+chat_history_path = os.path.join("results", "chat_history.json")
+def load_history(path):
+    if os.path.exists(path):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return []
+    return []
+def save_history(path, data):
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f)
+    except Exception:
+        pass
+
 if "chat_engine" not in st.session_state:
     searcher = SmartSearcher()
     llm = Llama(
@@ -75,14 +95,16 @@ if "chat_engine" not in st.session_state:
     st.session_state.context_mode = "lines"
     st.session_state.last_results = []
     st.session_state.last_query = ""
-    st.session_state.search_history_search = []
-    st.session_state.search_history_chat = []
+    st.session_state.search_history_search = load_history(search_history_path)
+    st.session_state.search_history_chat = load_history(chat_history_path)
     st.session_state.active_section = "Search, Summarize & Rephrase"
     st.session_state.chat_history = []
 
 chat_engine = st.session_state.chat_engine
 
 # --- Sidebar ---
+import os
+
 with st.sidebar:
     st.markdown("<h2 class='custom-header'>📚 Doc Assistant</h2>", unsafe_allow_html=True)
     section = st.radio(
@@ -94,6 +116,51 @@ with st.sidebar:
     st.session_state.active_section = section
 
     st.markdown("---")
+    # --- Document Management ---
+    st.subheader("Document Management")
+    docs_dir = "docs"
+    try:
+        # Upload
+        uploaded_file = st.file_uploader("Upload Document", type=["pdf", "docx", "txt"], key="sidebar_upload")
+        if uploaded_file is not None:
+            file_path = os.path.join(docs_dir, uploaded_file.name)
+            with open(file_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+            st.success(f"Uploaded: {uploaded_file.name}")
+            st.rerun()
+        # List
+        docs = [f for f in os.listdir(docs_dir) if f.lower().endswith((".pdf", ".docx", ".txt"))]
+        st.markdown("**Indexed Documents:**")
+        if docs:
+            for doc in docs:
+                st.write(doc)
+        else:
+            st.caption("No documents indexed.")
+        # Remove
+        remove_doc = st.selectbox("Remove Document", ["None"] + docs, key="sidebar_remove")
+        if remove_doc != "None":
+            if st.button(f"Remove {remove_doc}", key="sidebar_remove_btn"):
+                os.remove(os.path.join(docs_dir, remove_doc))
+                st.success(f"Removed: {remove_doc}")
+                st.rerun()
+        # Reindex
+        if st.button("🔄 Reindex All Documents", key="sidebar_reindex"):
+            from utils.file_loader import FileLoader
+            loader = FileLoader(docs_dir)
+            loader.refresh_cache()
+            st.success("Reindexing complete!")
+        # Context mode
+        context_mode = st.selectbox(
+            "Context Mode",
+            options=["lines", "paragraph", "snippet"],
+            index=["lines", "paragraph", "snippet"].index(st.session_state.context_mode),
+            key="sidebar_context_mode"
+        )
+        st.session_state.context_mode = context_mode
+    except Exception as e:
+        st.warning(f"Sidebar error: {e}")
+    st.markdown("---")
+    # --- Search/Chat History ---
     col_search, col_chat = st.columns(2)
     with col_search:
         st.markdown("<b class='custom-sub'>Search History</b>", unsafe_allow_html=True)
@@ -152,6 +219,7 @@ if st.session_state.active_section == "Search, Summarize & Rephrase":
             st.session_state.last_query = query
             if query not in st.session_state.search_history_search:
                 st.session_state.search_history_search.append(query)
+                save_history(search_history_path, st.session_state.search_history_search)
 
     # Results Card
     if st.session_state.last_results:
