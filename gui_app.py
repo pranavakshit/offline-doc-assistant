@@ -15,44 +15,72 @@ def set_theme(mode):
 
 # --- Custom CSS for Light/Dark Mode ---
 def inject_theme_css(mode):
-    if mode == "light":
-        st.markdown(
-            """
-            <style>
-                color: #22223b !important;
+    # --- Modern UI CSS inspired by the provided website, but only for real app features ---
+    st.markdown(
+        '''
+        <style>
+            body, .stApp {
+                background: linear-gradient(90deg, #bfc9ec 0%, #f7fbff 100%) !important;
             }
-            .stCaption, .stSidebar .stCaption { color: #1d3557 !important; }
-            body, .stApp { background-color: #ffffe3 !important; }
-            .stTextInput>div>div>input, .stTextArea>div>textarea, .stSelectbox>div>div>div>div { background-color: #fff !important; color: #22223b !important; }
-            .custom-card { background: linear-gradient(90deg, #ffdef2 0%, #f2e2ff 25%, #e2eeff 50%, #ddfffc 75%, #ffffe3 100%); border-radius: 10px; padding: 16px; margin-bottom: 10px; color: #22223b !important; }
+            .hero-bg {
+                min-height: 420px;
+                display: flex;
+                align-items: center;
+                justify-content: flex-start;
+                position: relative;
+                margin-bottom: 2rem;
+            }
+            .hero-overlay {
+                background: rgba(255,255,255,0.0);
+                padding: 2.5rem 2.5rem 2rem 2.5rem;
+                border-radius: 8px;
+                max-width: 700px;
+                box-shadow: none;
+                margin-left: 3vw;
+            }
+            .hero-title {
+                font-size: 3.2rem;
+                font-weight: 700;
+                color: #fff;
+                margin-bottom: 0.5rem;
+                letter-spacing: -1px;
+                font-family: 'Georgia', serif;
+                text-shadow: 0 2px 8px rgba(0,0,0,0.12);
+            }
+            .hero-desc {
+                font-size: 1.5rem;
+                color: #fff;
+                margin-bottom: 1.5rem;
+                text-shadow: 0 2px 8px rgba(0,0,0,0.10);
+            }
+            .custom-header { color: #1d3557 !important; font-size: 1.7rem; font-weight: 700; letter-spacing: -1px; }
+            .custom-sub { color: #457b9d !important; font-size: 1.1rem; }
+            .custom-card { background: #fff; border-radius: 10px; padding: 16px; margin-bottom: 10px; color: #22223b !important; box-shadow: 0 2px 12px 0 rgba(0,0,0,0.04); }
             .custom-chat { background: #e2eeff; border-radius: 10px; padding: 12px; margin-bottom: 8px; color: #22223b !important; }
-            .custom-header { color: #1d3557 !important; }
-            .custom-sub { color: #457b9d !important; }
-            .stButton>button { color: #22223b !important; background-color: #fff !important; border: 1px solid #e2eeff !important; }
-            .stButton>button:hover { background-color: #e2eeff !important; color: #1d3557 !important; }
+            .stButton>button { color: #fff !important; background-color: #ff8200 !important; border: none !important; font-weight: 600; border-radius: 4px !important; padding: 0.5rem 1.2rem !important; }
+            .stButton>button:hover { background-color: #e76f00 !important; color: #fff !important; }
+            .stTextInput>div>div>input, .stTextArea>div>textarea, .stSelectbox>div>div>div>div { background-color: #fff !important; color: #22223b !important; border-radius: 4px !important; }
+            .stCaption, .stSidebar .stCaption { color: #1d3557 !important; }
             .stAlert, .stAlert p, .stAlert span, .stAlert div { color: #22223b !important; }
             textarea, .stTextArea textarea { color: #22223b !important; background-color: #fff !important; }
-            </style>
-            """,
-            unsafe_allow_html=True
-        )
-    else:
-        st.markdown(
-            """
-            <style>
-                color: #e4e6eb !important;
-            }
-            .stCaption, .stSidebar .stCaption { color: #a8daf9 !important; }
-            body, .stApp { background-color: #18191a !important; }
-            .stTextInput>div>div>input, .stTextArea>div>textarea, .stSelectbox>div>div>div>div { background-color: #23272f !important; color: #e4e6eb !important; }
-            .custom-card { background: #23272f; border-radius: 10px; padding: 16px; margin-bottom: 10px; color: #e4e6eb !important; }
-            .custom-chat { background: #23272f; border-radius: 10px; padding: 12px; margin-bottom: 8px; color: #e4e6eb !important; }
-            .custom-header { color: #e4e6eb !important; }
-            .custom-sub { color: #a8daf9 !important; }
-            </style>
-            """,
-            unsafe_allow_html=True
-        )
+        </style>
+        ''', unsafe_allow_html=True)
+
+# --- Modern Hero Section (inspired by the image, but only for real app) ---
+def hero_section():
+    import base64, os
+    img_path = os.path.join(os.path.dirname(__file__), 'ConverSeek.png')
+    img_base64 = ""
+    try:
+        with open(img_path, "rb") as img_file:
+            img_base64 = base64.b64encode(img_file.read()).decode()
+    except Exception:
+        img_base64 = ""
+    hero_bg_style = f"background: url('data:image/png;base64,{img_base64}') center center/cover no-repeat; min-height: 420px; width: 100%;" if img_base64 else "background: linear-gradient(90deg, #bfc9ec 0%, #f7fbff 100%); min-height: 420px; width: 100%;"
+    st.markdown(
+        f'''
+        <div class="hero-bg" style="{hero_bg_style}"></div>
+        ''', unsafe_allow_html=True)
 
 inject_theme_css(st.session_state.theme_mode)
 
@@ -191,8 +219,9 @@ with st.sidebar:
     st.caption("Offline. All data stays on your device.")
 
 # --- Main UI ---
-st.markdown("<h1 class='custom-header'>Welcome to Offline Document Assistant</h1>", unsafe_allow_html=True)
-st.markdown("<p class='custom-sub'>Search, chat, summarize, and rephrase your documents – all offline.</p>", unsafe_allow_html=True)
+
+# --- Modern Hero Section ---
+hero_section()
 
 if st.session_state.active_section == "Search, Summarize & Rephrase":
     # Set query_input from pending_query before widget is created
