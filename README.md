@@ -1,3 +1,8 @@
+
+<p align="left">
+  <img src="indian-oil-seeklogo.png" alt="IndianOil Logo" width="90"/>
+</p>
+
 # 🧠 Offline AI-Powered Document Assistant
 
 A powerful offline AI assistant for intelligent document processing and interaction. Features advanced search capabilities, OCR support, chat functionality, content summarization, and adaptive learning from user feedback. Built for secure enterprise environments requiring complete data privacy.
@@ -52,25 +57,49 @@ A powerful offline AI assistant for intelligent document processing and interact
 
 ---
 
+
 ## 📁 Project Structure
 
-```
-offline-doc-assistant/
-├── chat/
-│   ├── context_manager.py      # Conversation history management
-│   ├── document_chat.py        # Main chat engine
-│   └── rephraser.py           # Text rephrasing functionality
-├── search/
-│   ├── search_engine.py       # Hybrid search implementation
-│   └── summarizer.py          # Document summarization
-├── feedback/
-│   └── feedback_handler.py    # User feedback processing
-├── utils/
-│   └── file_loader.py         # Document loading utilities
-├── docs/                      # Place your documents here
-├── results/                   # Output and logs
-├── config.yaml               # Configuration settings
-└── main.py                   # Application entry point
+```plantuml
+@startuml
+package "offline-doc-assistant" {
+  folder "chat" {
+    file "context_manager.py"
+    file "document_chat.py"
+    file "rephraser.py"
+  }
+  folder "search" {
+    file "search_engine.py"
+    file "ranker.py"
+    file "summarizer.py"
+  }
+  folder "feedback" {
+    file "feedback_handler.py"
+  }
+  folder "ocr" {
+    file "ocr_engine.py"
+  }
+  folder "utils" {
+    file "file_loader.py"
+  }
+  folder "docs"
+  folder "results"
+  folder "models" {
+    folder "all-mpnet-base-v2"
+    file "mistral-7b-instruct-v0.2.Q4_K_M.gguf"
+  }
+  folder "my-theme" {
+    file "package.json"
+    file "sakura-fork-color-theme.json"
+  }
+  file "gui_app.py"
+  file "main.py"
+  file "chatbot.py"
+  file "config.yaml"
+  file "requirements.txt"
+  file "README.md"
+}
+@enduml
 ```
 
 ---
