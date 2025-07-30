@@ -60,7 +60,47 @@ A powerful offline AI assistant for intelligent document processing and interact
 
 ## 📁 Project Structure
 
-![Project Structure](https://www.plantuml.com/plantuml/png/RPBDZfim4CVlF0NYRgkAAlMQIisfog5z0Mkm1t2nnzGUHqchlFjwLoZ1R2u8VZF_3omV4qFax5spW9vXnBOBm-0ieJ112qZ9bWtYhltVjEqGdC7OTdg2bHHc7HOIYF7AoWCLaoYNMxUP5gliaLYz2tUpYCiK8JqqzqrEGeXwgf9Mff16IxZt0fe_XQViFKJxxsN2W6Xwq7ELyQ1g0ZBkfJ3eM6iAg4fLsvcjIxkCybGkW7bfRu9EtUOxOigEA-I3mOtfIi4vuHT25Zqa59V3zYYyJHp1YM-zi5HUisPn-I8FyjTNzLETvJZcOT_4tmHFwB5klzuM-IS5gWuRvXn1327EGWSNueVukLUSryqnMmNBilxxsWyiLK1Fm7tWcWKQx2XluDqJHloRRIn9n4dobP-JtwVlFyudwKtNt9iZaidUlG40)
+
+```
+offline-doc-assistant/
+├── chat/
+│   ├── context_manager.py         # Conversation history management
+│   ├── document_chat.py           # Main chat engine
+│   └── rephraser.py               # Text rephrasing functionality
+├── search/
+│   ├── search_engine.py           # Hybrid search implementation
+│   ├── ranker.py                  # Search ranking logic
+│   └── summarizer.py              # Document summarization
+├── feedback/
+│   └── feedback_handler.py        # User feedback processing
+├── ocr/
+│   └── ocr_engine.py              # OCR processing utilities
+├── utils/
+│   └── file_loader.py             # Document loading utilities
+├── docs/                          # Place your documents here
+│   └── code-of-conduct-final.pdf  # Example document
+├── results/                       # Output and logs
+├── models/
+│   ├── mistral-7b-instruct-v0.2.Q4_K_M.gguf   # LLM model file
+│   └── all-mpnet-base-v2/         # Embedding model directory
+├── my-theme/
+│   ├── package.json               # VS Code theme package
+│   └── sakura-fork-color-theme.json # Custom color theme
+├── feedback/
+│   └── feedback_handler.py        # User feedback processing
+├── chunks_cache.txt               # Embedding cache
+├── chunks_cache.txt.meta          # Cache metadata
+├── config.yaml                    # Configuration settings
+├── folder_structure.txt           # Folder structure reference
+├── from_sentence_transformers_import_Senten.py # Test/utility script
+├── gui_app.py                     # Streamlit GUI application
+├── main.py                        # Application entry point
+├── chatbot.py                     # CLI chatbot entry point
+├── README.md                      # Project documentation
+├── requirements.txt               # Python dependencies
+├── test.py                        # General test script
+├── test_sentence_transformer.py   # Embedding model test script
+```
 
 ---
 
