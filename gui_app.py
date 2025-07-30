@@ -16,29 +16,44 @@ def set_theme(mode):
 # --- Custom CSS for Light/Dark Mode ---
 def inject_theme_css(mode):
     # --- Modern UI CSS inspired by the provided website, but only for real app features ---
+    if mode == "dark":
+        app_bg = "background: #18191a !important;"
+        main_text = "color: #e4e6eb !important;"
+        info_text = "color: #a8daf9 !important;"
+    else:
+        app_bg = "background: linear-gradient(90deg, #bfc9ec 0%, #f7fbff 100%) !important;"
+        main_text = "color: #22223b !important;"
+        info_text = "color: #1d3557 !important;"
     st.markdown(
-        '''
+        f'''
         <style>
-            body, .stApp {
-                background: linear-gradient(90deg, #bfc9ec 0%, #f7fbff 100%) !important;
-            }
-            .hero-bg {
+            body, .stApp {{
+                {app_bg}
+            }}
+            .main-window-text {{
+                {main_text}
+            }}
+            .main-info-text {{
+                {info_text}
+                font-size: 1.1rem;
+            }}
+            .hero-bg {{
                 min-height: 420px;
                 display: flex;
                 align-items: center;
                 justify-content: flex-start;
                 position: relative;
                 margin-bottom: 2rem;
-            }
-            .hero-overlay {
+            }}
+            .hero-overlay {{
                 background: rgba(255,255,255,0.0);
                 padding: 2.5rem 2.5rem 2rem 2.5rem;
                 border-radius: 8px;
                 max-width: 700px;
                 box-shadow: none;
                 margin-left: 3vw;
-            }
-            .hero-title {
+            }}
+            .hero-title {{
                 font-size: 3.2rem;
                 font-weight: 700;
                 color: #fff;
@@ -46,23 +61,23 @@ def inject_theme_css(mode):
                 letter-spacing: -1px;
                 font-family: 'Georgia', serif;
                 text-shadow: 0 2px 8px rgba(0,0,0,0.12);
-            }
-            .hero-desc {
+            }}
+            .hero-desc {{
                 font-size: 1.5rem;
                 color: #fff;
                 margin-bottom: 1.5rem;
                 text-shadow: 0 2px 8px rgba(0,0,0,0.10);
-            }
-            .custom-header { color: #1d3557 !important; font-size: 1.7rem; font-weight: 700; letter-spacing: -1px; }
-            .custom-sub { color: #457b9d !important; font-size: 1.1rem; }
-            .custom-card { background: #fff; border-radius: 10px; padding: 16px; margin-bottom: 10px; color: #22223b !important; box-shadow: 0 2px 12px 0 rgba(0,0,0,0.04); }
-            .custom-chat { background: #e2eeff; border-radius: 10px; padding: 12px; margin-bottom: 8px; color: #22223b !important; }
-            .stButton>button { color: #fff !important; background-color: #ff8200 !important; border: none !important; font-weight: 600; border-radius: 4px !important; padding: 0.5rem 1.2rem !important; }
-            .stButton>button:hover { background-color: #e76f00 !important; color: #fff !important; }
-            .stTextInput>div>div>input, .stTextArea>div>textarea, .stSelectbox>div>div>div>div { background-color: #fff !important; color: #22223b !important; border-radius: 4px !important; }
-            .stCaption, .stSidebar .stCaption { color: #1d3557 !important; }
-            .stAlert, .stAlert p, .stAlert span, .stAlert div { color: #22223b !important; }
-            textarea, .stTextArea textarea { color: #22223b !important; background-color: #fff !important; }
+            }}
+            .custom-header {{ color: #1d3557 !important; font-size: 1.7rem; font-weight: 700; letter-spacing: -1px; }}
+            .custom-sub {{ color: #457b9d !important; font-size: 1.1rem; }}
+            .custom-card {{ background: #fff; border-radius: 10px; padding: 16px; margin-bottom: 10px; color: #22223b !important; box-shadow: 0 2px 12px 0 rgba(0,0,0,0.04); }}
+            .custom-chat {{ background: #e2eeff; border-radius: 10px; padding: 12px; margin-bottom: 8px; color: #22223b !important; }}
+            .stButton>button {{ color: #fff !important; background-color: #ff8200 !important; border: none !important; font-weight: 600; border-radius: 4px !important; padding: 0.5rem 1.2rem !important; }}
+            .stButton>button:hover {{ background-color: #e76f00 !important; color: #fff !important; }}
+            .stTextInput>div>div>input, .stTextArea>div>textarea, .stSelectbox>div>div>div>div {{ background-color: #fff !important; color: #22223b !important; border-radius: 4px !important; }}
+            .stCaption, .stSidebar .stCaption {{ color: #1d3557 !important; }}
+            .stAlert, .stAlert p, .stAlert span, .stAlert div {{ color: #22223b !important; }}
+            textarea, .stTextArea textarea {{ color: #22223b !important; background-color: #fff !important; }}
         </style>
         ''', unsafe_allow_html=True)
 
@@ -230,7 +245,7 @@ if st.session_state.active_section == "Search, Summarize & Rephrase":
         del st.session_state["pending_query"]
 
     with st.container():
-        st.markdown("#### 🔎 Search Documents")
+        st.markdown('<div class="main-window-text"><h4>🔎 Search Documents</h4></div>', unsafe_allow_html=True)
         cols = st.columns([3, 1])
         with cols[0]:
             query = st.text_input("Enter your search query:", value=st.session_state.get("query_input", ""), key="query_input")
@@ -252,11 +267,11 @@ if st.session_state.active_section == "Search, Summarize & Rephrase":
 
     # Results Card
     if st.session_state.last_results:
-        st.markdown("#### 📄 Top Search Results")
+        st.markdown('<div class="main-window-text"><h4>📄 Top Search Results</h4></div>', unsafe_allow_html=True)
         for idx, result in enumerate(st.session_state.last_results, 1):
             with st.container():
                 st.markdown(
-                    f"<div class='custom-card'>"
+                    f"<div class='custom-card main-window-text'>"
                     f"<b class='custom-header'>Result {idx}:</b> <span class='custom-sub'>[Doc: {result.get('document', 'N/A')}]</span><br>"
                     f"<span class='custom-sub'>Page:</span> {result.get('page', 'N/A')} | "
                     f"<span class='custom-sub'>Line:</span> {result.get('line_num', 'N/A')} | "
@@ -264,7 +279,9 @@ if st.session_state.active_section == "Search, Summarize & Rephrase":
                     f"</div>",
                     unsafe_allow_html=True
                 )
+                st.markdown(f'<div class="main-window-text">', unsafe_allow_html=True)
                 st.code(result.get('context', result.get('line', 'N/A')), language="markdown")
+                st.markdown('</div>', unsafe_allow_html=True)
 
                 col1, col2 = st.columns(2)
                 with col1:
@@ -276,7 +293,7 @@ if st.session_state.active_section == "Search, Summarize & Rephrase":
                         chat_engine.searcher.save_user_feedback(st.session_state.last_query, result['line'], False)
                         st.warning("Marked as irrelevant.")
 
-                st.markdown("**✏️ Rephrase Result:**")
+                st.markdown('<div class="main-window-text">**✏️ Rephrase Result:**</div>', unsafe_allow_html=True)
                 tone = st.selectbox(
                     "Select tone:",
                     options=["formal", "casual", "assertive", "technical", "persuasive", "poetic", "empathetic"],
@@ -304,8 +321,8 @@ if st.session_state.active_section == "Search, Summarize & Rephrase":
     with st.expander("💬 Chat History"):
         history = chat_engine.get_history()
         for turn in history:
-            st.markdown(f"**You:** {turn['user']}")
-            st.markdown(f"**Assistant:** {turn['assistant']}")
+            st.markdown(f'<div class="main-window-text">**You:** {turn["user"]}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="main-window-text">**Assistant:** {turn["assistant"]}</div>', unsafe_allow_html=True)
 
 elif st.session_state.active_section == "Chat":
     st.markdown("#### 💬 Document Chat")
@@ -336,4 +353,4 @@ elif st.session_state.active_section == "Chat":
             )
 
 st.markdown("<br>", unsafe_allow_html=True)
-st.info("All processing is done locally. No data leaves your machine.")
+st.markdown('<div class="main-info-text">All processing is done locally. No data leaves your machine.</div>', unsafe_allow_html=True)
