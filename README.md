@@ -60,47 +60,7 @@ A powerful offline AI assistant for intelligent document processing and interact
 
 ## 📁 Project Structure
 
-```plantuml
-@startuml
-package "offline-doc-assistant" {
-  folder "chat" {
-    file "context_manager.py"
-    file "document_chat.py"
-    file "rephraser.py"
-  }
-  folder "search" {
-    file "search_engine.py"
-    file "ranker.py"
-    file "summarizer.py"
-  }
-  folder "feedback" {
-    file "feedback_handler.py"
-  }
-  folder "ocr" {
-    file "ocr_engine.py"
-  }
-  folder "utils" {
-    file "file_loader.py"
-  }
-  folder "docs"
-  folder "results"
-  folder "models" {
-    folder "all-mpnet-base-v2"
-    file "mistral-7b-instruct-v0.2.Q4_K_M.gguf"
-  }
-  folder "my-theme" {
-    file "package.json"
-    file "sakura-fork-color-theme.json"
-  }
-  file "gui_app.py"
-  file "main.py"
-  file "chatbot.py"
-  file "config.yaml"
-  file "requirements.txt"
-  file "README.md"
-}
-@enduml
-```
+![Project Structure](https://www.plantuml.com/plantuml/png/RPBDZfim4CVlF0NYRgkAAlMQIisfog5z0Mkm1t2nnzGUHqchlFjwLoZ1R2u8VZF_3omV4qFax5spW9vXnBOBm-0ieJ112qZ9bWtYhltVjEqGdC7OTdg2bHHc7HOIYF7AoWCLaoYNMxUP5gliaLYz2tUpYCiK8JqqzqrEGeXwgf9Mff16IxZt0fe_XQViFKJxxsN2W6Xwq7ELyQ1g0ZBkfJ3eM6iAg4fLsvcjIxkCybGkW7bfRu9EtUOxOigEA-I3mOtfIi4vuHT25Zqa59V3zYYyJHp1YM-zi5HUisPn-I8FyjTNzLETvJZcOT_4tmHFwB5klzuM-IS5gWuRvXn1327EGWSNueVukLUSryqnMmNBilxxsWyiLK1Fm7tWcWKQx2XluDqJHloRRIn9n4dobP-JtwVlFyudwKtNt9iZaidUlG40)
 
 ---
 
