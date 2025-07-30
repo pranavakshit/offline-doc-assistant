@@ -249,9 +249,8 @@ This launches a local web app for searching, chatting, summarizing, and rephrasi
 
 ## 👥 Contributors
 
-- **Pranav Akshit** – Core chat functionality, context management, OCR integration
-- **Ananya Rana** – Search engine, feedback learning, summarization, content rephrasing
-
+- **Ananya Rana** 
+- **Pranav Akshit** 
 ---
 
 ## 📄 License
