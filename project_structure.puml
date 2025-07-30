@@ -1,0 +1,39 @@
+@startuml
+package "offline-doc-assistant" {
+  folder "chat" {
+    file "context_manager.py"
+    file "document_chat.py"
+    file "rephraser.py"
+  }
+  folder "search" {
+    file "search_engine.py"
+    file "ranker.py"
+    file "summarizer.py"
+  }
+  folder "feedback" {
+    file "feedback_handler.py"
+  }
+  folder "ocr" {
+    file "ocr_engine.py"
+  }
+  folder "utils" {
+    file "file_loader.py"
+  }
+  folder "docs"
+  folder "results"
+  folder "models" {
+    folder "all-mpnet-base-v2"
+    file "mistral-7b-instruct-v0.2.Q4_K_M.gguf"
+  }
+  folder "my-theme" {
+    file "package.json"
+    file "sakura-fork-color-theme.json"
+  }
+  file "gui_app.py"
+  file "main.py"
+  file "chatbot.py"
+  file "config.yaml"
+  file "requirements.txt"
+  file "README.md"
+}
+@enduml

@@ -85,16 +85,26 @@ def inject_theme_css(mode):
 def hero_section():
     import base64, os
     img_path = os.path.join(os.path.dirname(__file__), 'ConverSeek.png')
+    logo_path = os.path.join(os.path.dirname(__file__), "indian-oil-seeklogo.png")
     img_base64 = ""
+    logo_base64 = ""
     try:
         with open(img_path, "rb") as img_file:
             img_base64 = base64.b64encode(img_file.read()).decode()
     except Exception:
         img_base64 = ""
+    try:
+        with open(logo_path, "rb") as logo_file:
+            logo_base64 = base64.b64encode(logo_file.read()).decode()
+    except Exception:
+        logo_base64 = ""
     hero_bg_style = f"background: url('data:image/png;base64,{img_base64}') center center/cover no-repeat; min-height: 420px; width: 100%;" if img_base64 else "background: linear-gradient(90deg, #bfc9ec 0%, #f7fbff 100%); min-height: 420px; width: 100%;"
     st.markdown(
         f'''
-        <div class="hero-bg" style="{hero_bg_style}"></div>
+        <div style="position: relative; width: 100%;">
+            {'<img src="data:image/png;base64,' + logo_base64 + '" style="position: absolute; top: 18px; left: 18px; width: 90px; z-index: 10;">' if logo_base64 else ''}
+            <div class="hero-bg" style="{hero_bg_style}"></div>
+        </div>
         ''', unsafe_allow_html=True)
 
 inject_theme_css(st.session_state.theme_mode)
