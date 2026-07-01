@@ -1,0 +1,43 @@
+@startuml
+' Architecture diagram for offline-doc-assistant
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+package "offline-doc-assistant" {
+  folder "chat" {
+    [context_manager.py]
+    [document_chat.py]
+    [rephraser.py]
+  }
+  folder "search" {
+    [search_engine.py]
+    [ranker.py]
+    [summarizer.py]
+  }
+  folder "feedback" {
+    [feedback_handler.py]
+  }
+  folder "ocr" {
+    [ocr_engine.py]
+  }
+  folder "utils" {
+    [file_loader.py]
+  }
+  folder "models" {
+    folder "all-mpnet-base-v2" {
+      [model files]
+    }
+    [mistral-7b-instruct-v0.2.Q4_K_M.gguf]
+  }
+  folder "my-theme" {
+    [package.json]
+    [sakura-fork-color-theme.json]
+  }
+  [gui_app.py]
+  [main.py]
+  [chatbot.py]
+  [config.yaml]
+  [requirements.txt]
+  [README.md]
+}
+@enduml
