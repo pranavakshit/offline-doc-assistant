@@ -1,43 +1,57 @@
 @startuml
-' Architecture diagram for offline-doc-assistant
+' Comprehensive architecture diagram for offline-doc-assistant
+left to right direction
 skinparam shadowing false
-skinparam packageStyle rectangle
+skinparam componentStyle rectangle
 
+' Define external components
+cloud "User (CLI)" as user
+
+' Core application
 package "offline-doc-assistant" {
-  folder "chat" {
-    [context_manager.py]
-    [document_chat.py]
-    [rephraser.py]
+  [main.py] as main
+  folder "config" {
+    [config.yaml] as config
   }
-  folder "search" {
-    [search_engine.py]
-    [ranker.py]
-    [summarizer.py]
-  }
-  folder "feedback" {
-    [feedback_handler.py]
-  }
-  folder "ocr" {
-    [ocr_engine.py]
-  }
-  folder "utils" {
-    [file_loader.py]
-  }
-  folder "models" {
-    folder "all-mpnet-base-v2" {
-      [model files]
-    }
-    [mistral-7b-instruct-v0.2.Q4_K_M.gguf]
-  }
-  folder "my-theme" {
-    [package.json]
-    [sakura-fork-color-theme.json]
-  }
-  [gui_app.py]
-  [main.py]
-  [chatbot.py]
-  [config.yaml]
-  [requirements.txt]
-  [README.md]
+  component "Llama (LLM)" as llm
+  component "SmartSearcher" as searcher
+  component "SearchEngine" as engine
+  component "Ranker" as ranker
+  component "Summarizer" as summarizer
+  component "DocumentChatEngine" as chatEngine
+  component "FeedbackHandler" as feedback
+  component "OCR Engine" as ocr
+  component "File Loader" as loader
 }
+
+' Data stores
+database "Vector Store / Index" as vectorStore
+folder "docs/ (raw documents)" as docs
+folder "models/" as models
+
+' Interactions
+user --> main : start / input
+main --> config : read settings
+main --> searcher : instantiate
+searcher --> engine : search(query)
+engine --> vectorStore : query vectors
+vectorStore --> engine : retrieve docs
+engine --> ranker : rank(results)
+ranker --> summarizer : summarize(context)
+engine --> ocr : OCR (if PDF)
+searcher --> chatEngine : rephrase / summary
+chatEngine --> llm : LLM inference
+chatEngine --> feedback : store feedback
+feedback --> vectorStore : update relevance
+loader --> docs : load & chunk
+loader --> vectorStore : index
+main --> chatEngine : user rephrase request
+main --> feedback : collect feedback
+
+note right of main
+  CLI loop handling
+  options: search, list, remove, reindex
+end note
+
 @enduml
+
