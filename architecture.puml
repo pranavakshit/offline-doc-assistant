@@ -11,7 +11,7 @@ cloud "User (CLI)" as user
 package "offline-doc-assistant" {
   [main.py] as main
   folder "config" {
-    [config.yaml] as config
+    [config.yaml] as cfg
   }
   component "Llama (LLM)" as llm
   component "SmartSearcher" as searcher

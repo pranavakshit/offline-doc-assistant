@@ -27,7 +27,7 @@ class SmartSearcher:
         else:
             self.reader = None
 
-        self.embedder = SentenceTransformer(self.config['embedding_model'], local_files_only=True)
+        self.embedder = SentenceTransformer(self.config['embedding_model'], local_files_only=False)
 
         # Ensure abbreviation map exists
         self.abbr_map = self.config.get('abbreviation_mapping', {})

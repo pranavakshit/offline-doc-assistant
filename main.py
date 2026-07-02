@@ -42,15 +42,18 @@ def collect_feedback(searcher, query, results):
             if 0 <= idx < len(results):
                 searcher.save_user_feedback(query, results[idx]['line'], True)
 
-
 def main():
     searcher = SmartSearcher()
 
+    import yaml
+    with open('config.yaml', 'r') as f:
+        config = yaml.safe_load(f)
+
     llm = Llama(
-        model_path="models/mistral-7b-instruct-v0.2.Q4_K_M.gguf",
-        n_ctx=4096,
-        n_threads=8,
-        n_gpu_layers=35,
+        model_path=config.get('llm_model_path', "models/qwen2.5-7b-instruct-q4_k_m.gguf"),
+        n_ctx=config.get('llm_context_window', 4096),
+        n_threads=config.get('llm_threads', 8),
+        n_gpu_layers=config.get('llm_gpu_layers', 35),
         use_mlock=True
     )
 

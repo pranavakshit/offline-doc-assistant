@@ -136,12 +136,15 @@ def save_history(path, data):
         pass
 
 if "chat_engine" not in st.session_state:
+    import yaml
+    with open('config.yaml', 'r') as f:
+        config = yaml.safe_load(f)
     searcher = SmartSearcher()
     llm = Llama(
-        model_path="models/mistral-7b-instruct-v0.2.Q4_K_M.gguf",
-        n_ctx=4096,
-        n_threads=8,
-        n_gpu_layers=35,
+        model_path=config.get('llm_model_path', "models/qwen2.5-7b-instruct-q4_k_m.gguf"),
+        n_ctx=config.get('llm_context_window', 4096),
+        n_threads=config.get('llm_threads', 8),
+        n_gpu_layers=config.get('llm_gpu_layers', 35),
         use_mlock=True
     )
     st.session_state.chat_engine = DocumentChatEngine(model=llm, searcher=searcher)
